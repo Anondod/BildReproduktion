@@ -1,6 +1,6 @@
 clear all;
 
-I = im2double(imread('elin.jpg'));
+I = im2double(imread('test6.jpg'));
 
 [grad_m,grad_dir] = imgradient(mean(I,3));
 blur_m = imgaussfilt(grad_m, 1);
@@ -53,15 +53,3 @@ imshow(m/n)
 figure;
 a = m~=0;
 imshow(a)
-%%
-color = I(150,150,:);
-
-e = rgb2lab(I) - rgb2lab(color);
-
-E = sqrt(e(:,:,1).^2+e(:,:,2).^2+e(:,:,3).^2);
-
-E_t = E <= 20;
-
-imshow(E/100.0)
-%%
-imshow(E_t);
