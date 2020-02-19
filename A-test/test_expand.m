@@ -1,10 +1,10 @@
 % expansion test
-clear all;
 
 % 0 draws nothing
-% 1 draws when each segment is finished
-% 2 shows every pixel update
-drawMode = 0;
+% 1 draws every 1% of total segments finished
+% 2 draws when each segment is finished
+% 3 shows every pixel update
+drawMode = 1;
 
 % have 1px contours around segments?
 doContours = 1;
@@ -12,25 +12,28 @@ doContours = 1;
 % for step 2 and the total coverage at end
 drawcol(1,1,:) = [0,0,1];
 
-distanceFac = 0.2;
-% euclidean , cityblock
-distMethod = 'euclidean';
+distCityBlock = @(p1,p2) sum(abs(p2-p1));
+distEuclidean = @(p1,p2) sqrt(sum((p2-p1).^2));
+
+% choose one from above: euclidean , cityblock
+distFun = distEuclidean;
+distanceFac = 0.4;
 
 qSize = 4000;
 
-maxErr = 10000;
+maxErr = 8000;
 
 % if a pixel of the segment has to large an error the segment stops
-cancelThreshold = 60;
+cancelThreshold = 80;
 
 %nr mosaics (max)
 n = 5000;
 
 % DECIDE INPUT IMAGE HERE
-I = im2double(imresize(imread('test1.jpg'),.4));
+I = im2double(imresize(imread('elin.jpg'),.8));
 
 % Blur image?
-% I = imgaussfilt(I,1);
+I = imgaussfilt(I,2);
 Isize = [size(I,1) size(I,2)];
 
 Ilab = rgb2lab(I);
@@ -51,11 +54,11 @@ covered = 0;
 % main segment for-loop
 for i=2:2:2*n
 
-% alt faster ver. but looks worse maybe
-%[py,px] = find(mask==0,1000,'first');
-[py,px] = find(mask==0);
+% alt faster ver. but looks worse maybe. also breaks coverage
+%[py_temp,px_temp] = find(mask==0,1,'first');
+[py_temp,px_temp] = find(mask==0);
 
-unfilled = size(px,1);
+unfilled = size(px_temp,1);
 
 if(unfilled==0)
     break;
@@ -66,12 +69,18 @@ if(mod(i,printmod)==0)
     covered = 1-unfilled/(Isize(1)*Isize(2));
     fprintf(i/2+"/"+n+" ("+100*i/(2*n)+"%%) segments done\n");
     fprintf(100*(covered)+"%% coverage\n\n");
+    
+    if(drawMode == 1)
+        warning off;
+        imshow(Res)
+        warning on;
+    end
     drawnow
 end
 
 index = randi(unfilled);
-py = py(index);
-px = px(index);
+py = py_temp(index);
+px = px_temp(index);
 
 color = I(py,px,:);
 e = Ilab - Ilab(py,px,:);
@@ -99,34 +108,37 @@ while acc_error < maxErr
     
     % adding adjacents to queue and mask
     
+    % pdist substitute: (sqrt((px-pt(2)).^2+(py-pt(1)).^2))
+
+    
     pt =[p(1)+1, p(2)];
     if(p(1) ~= Isize(1) && mask(pt(1),pt(2))==0)
         mask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
-        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+pdist([pt(1),pt(2); py,px], distMethod)*distanceFac];
+        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
     pt =[p(1)-1, p(2)];
     if(p(1) ~= 1 && mask(pt(1),pt(2))==0)
         mask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
-        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+pdist([pt(1),pt(2); py,px], distMethod)*distanceFac];
+        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
     pt =[p(1), p(2)+1];
     if(p(2) ~= Isize(2) && mask(pt(1),pt(2))==0)
         mask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
-        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+pdist([pt(1),pt(2); py,px], distMethod)*distanceFac];
+        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
     pt =[p(1), p(2)-1];
     if(p(2) ~= 1 && mask(pt(1),pt(2))==0)
         mask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
-        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+pdist([pt(1),pt(2); py,px], distMethod)*distanceFac];
+        q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
    
     
     % doesnt look good when it draws around lower or right edge atm
-    if(drawMode == 2 && mod(drawValue, 10)==0)
+    if(drawMode == 3 && mod(drawValue, 10)==0)
         width = 100;
         scope1 = max(1,p(1)-width);
         scope1 = scope1:min(Isize(1),scope1+2*width);
@@ -155,7 +167,7 @@ Res(mask3d==i) = color(1,1,2);
 mask3d(:,:,2)=0;
 Res(mask3d==i) = color(1,1,3);
 
-if(drawMode == 1)
+if(drawMode == 2)
     imshow(Res)
 end
 
@@ -185,5 +197,3 @@ title("result");
 
 % SAVE COMMAND
 %imwrite(Res,'insertname.png')
-
-
