@@ -16,7 +16,7 @@ distCityBlock = @(p1,p2) sum(abs(p2-p1));
 distEuclidean = @(p1,p2) sqrt(sum((p2-p1).^2));
 
 % choose one from above: euclidean , cityblock
-distFun = distCityBlock;
+distFun = distEuclidean;
 distanceFac = 0.4;
 
 qSize = 10000;
@@ -26,7 +26,7 @@ maxErr = 10000;
 % 0 - choose at random.
 % anything else - random place of the first
 % firstSelection black mask positions.
-firstSelection = 100;
+firstSelection = 0;
 
 % if a pixel of the segment has to large an error the segment stops
 cancelThreshold = 80;
@@ -39,7 +39,7 @@ SEGMaxRad = 50;
 
 
 % DECIDE INPUT IMAGE HERE
-I = im2double(imresize(imread('test3.jpg'),1));
+I = im2double(imresize(imread('elin.jpg'),0.8));
 
 % Blur image?
 %I = imgaussfilt(I,2);
@@ -192,9 +192,32 @@ while acc_error < maxErr
     drawValue = drawValue+1;
 end
 
+
 if(doContours==0)
     SEGmask(SEGmask==i+1) = 0;
 end
+
+tempClose = SEGmask == i;
+
+tempClose = imclose(tempClose, closeLineHorizontal);
+tempClose = imclose(tempClose, closeLineVertical);
+tempClose = imclose(tempClose, closeSphere);
+
+sphere = strel('sphere', 4);
+
+tempDilate = imdilate(tempClose, sphere);
+
+contorsResult = logical(tempDilate - tempClose);
+
+% temp = zeros(size(SEGmask));
+% temp(contorsResult) = temp(contorsResult) + 0.4;
+% temp(tempClose) = temp(tempClose) + 0.2;
+% imshow(temp);
+% pause;
+
+SEGmask(tempClose) = i;
+SEGmask(contorsResult) = i+1;
+
 
 mask(SEGy,SEGx) = SEGmask;
 
@@ -206,6 +229,14 @@ SEGmask3d(:,:,1)=0;
 TempIM(SEGmask3d==i) = color(1,1,2);
 SEGmask3d(:,:,2)=0;
 TempIM(SEGmask3d==i) = color(1,1,3);
+
+SEGmask3d = repmat(SEGmask,1,1,3);
+
+TempIM(SEGmask3d==i+1) = 0;
+mask3d(:,:,1)=0;
+TempIM(SEGmask3d==i+1) = 0;
+mask3d(:,:,2)=0;
+TempIM(SEGmask3d==i+1) = 0;
 
 Res(SEGy,SEGx,:) = TempIM;
 
