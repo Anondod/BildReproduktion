@@ -9,6 +9,11 @@ drawMode = 1;
 % have 1px contours around segments?
 doContours = 1;
 
+% Open/close structuring element (STREL) 
+closeSphere = strel('sphere', 3);
+closeLineHorizontal = strel('line', 50, 0);
+closeLineVertical = strel('line', 50, 90);
+
 % for step 2 and the total coverage at end
 drawcol(1,1,:) = [0,0,1];
 
