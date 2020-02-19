@@ -16,12 +16,17 @@ distCityBlock = @(p1,p2) sum(abs(p2-p1));
 distEuclidean = @(p1,p2) sqrt(sum((p2-p1).^2));
 
 % choose one from above: euclidean , cityblock
-distFun = distEuclidean;
+distFun = distCityBlock;
 distanceFac = 0.4;
 
-qSize = 4000;
+qSize = 10000;
 
-maxErr = 8000;
+maxErr = 10000;
+
+% 0 - choose at random.
+% anything else - random place of the first
+% firstSelection black mask positions.
+firstSelection = 100;
 
 % if a pixel of the segment has to large an error the segment stops
 cancelThreshold = 80;
@@ -34,7 +39,7 @@ SEGMaxRad = 50;
 
 
 % DECIDE INPUT IMAGE HERE
-I = im2double(imresize(imread('elin.jpg'),.8));
+I = im2double(imresize(imread('test3.jpg'),1));
 
 % Blur image?
 %I = imgaussfilt(I,2);
@@ -58,9 +63,13 @@ covered = 0;
 % main segment for-loop
 for i=2:2:2*n
 
-% alt faster ver. but looks worse maybe. also breaks coverage
-%[py_temp,px_temp] = find(mask==0,1,'first');
-[py_temp,px_temp] = find(mask==0);
+% alt faster ver. but looks worse maybe. also breaks coverage.
+% firstSelection = 1 gives the same result every time (maybe useful)
+if(firstSelection ~= 0)
+    [py_temp,px_temp] = find(mask==0,1,'first');
+else
+    [py_temp,px_temp] = find(mask==0);
+end
 
 unfilled = size(px_temp,1);
 
@@ -68,9 +77,18 @@ if(unfilled==0)
     break;
 end
 
+index = randi(unfilled);
+py = py_temp(index);
+px = px_temp(index);
+
+
 %progress bar
 if(mod(i,printmod)==0)
-    covered = 1-unfilled/(Isize(1)*Isize(2));
+    if(firstSelection~=0)
+        covered = (px*Isize(1)+py) /(Isize(1)*Isize(2));
+    else
+        covered = 1-unfilled/(Isize(1)*Isize(2));
+    end
     fprintf(i/2+"/"+n+" ("+100*i/(2*n)+"%%) segments done\n");
     fprintf(100*(covered)+"%% coverage\n\n");
     
@@ -82,9 +100,6 @@ if(mod(i,printmod)==0)
     drawnow
 end
 
-index = randi(unfilled);
-py = py_temp(index);
-px = px_temp(index);
 
 color = I(py,px,:);
 
