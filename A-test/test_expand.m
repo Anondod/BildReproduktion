@@ -7,12 +7,16 @@
 drawMode = 1;
 
 % have 1px contours around segments?
-doContours = 1;
+doContours = true;
+%Countours structuring element
+contoursMorph = strel('sphere', 3);
 
-% Open/close structuring element (STREL) 
-closeSphere = strel('sphere', 3);
-closeLineHorizontal = strel('line', 50, 0);
-closeLineVertical = strel('line', 50, 90);
+% Do morphological stuff?
+doMorph = true;
+% Close structuring element (STREL) 
+closeMorph1 = strel('sphere', 3);
+closeMorph2 = strel('line', 20, 0);
+closeMorph3 = strel('line', 20, 90);
 
 % for step 2 and the total coverage at end
 drawcol(1,1,:) = [0,0,1];
@@ -198,31 +202,31 @@ while acc_error < maxErr
 end
 
 
-if(doContours==0)
+if(doContours==false)
     SEGmask(SEGmask==i+1) = 0;
 end
 
-tempClose = SEGmask == i;
+if(doMorph == true)
+    tempClose = SEGmask == i;
 
-tempClose = imclose(tempClose, closeLineHorizontal);
-tempClose = imclose(tempClose, closeLineVertical);
-tempClose = imclose(tempClose, closeSphere);
+    tempClose = imclose(tempClose, closeMorph1);
+    tempClose = imclose(tempClose, closeMorph2);
+    tempClose = imclose(tempClose, closeMorph3);
 
-sphere = strel('sphere', 4);
 
-tempDilate = imdilate(tempClose, sphere);
+    if(doContours==true)
+        tempDilate = imdilate(tempClose, contoursMorph);
+        contorsResult = logical(tempDilate - tempClose);
+        SEGmask(contorsResult) = i+1;
+    end
+    % temp = zeros(size(SEGmask));
+    % temp(contorsResult) = temp(contorsResult) + 0.4;
+    % temp(tempClose) = temp(tempClose) + 0.2;
+    % imshow(temp);
+    % pause;
 
-contorsResult = logical(tempDilate - tempClose);
-
-% temp = zeros(size(SEGmask));
-% temp(contorsResult) = temp(contorsResult) + 0.4;
-% temp(tempClose) = temp(tempClose) + 0.2;
-% imshow(temp);
-% pause;
-
-SEGmask(tempClose) = i;
-SEGmask(contorsResult) = i+1;
-
+    SEGmask(tempClose) = i;
+end
 
 mask(SEGy,SEGx) = SEGmask;
 
@@ -237,12 +241,13 @@ TempIM(SEGmask3d==i) = color(1,1,3);
 
 SEGmask3d = repmat(SEGmask,1,1,3);
 
-TempIM(SEGmask3d==i+1) = 0;
-mask3d(:,:,1)=0;
-TempIM(SEGmask3d==i+1) = 0;
-mask3d(:,:,2)=0;
-TempIM(SEGmask3d==i+1) = 0;
-
+if(doContours == true)
+    TempIM(SEGmask3d==i+1) = 0;
+    mask3d(:,:,1)=0;
+    TempIM(SEGmask3d==i+1) = 0;
+    mask3d(:,:,2)=0;
+    TempIM(SEGmask3d==i+1) = 0;
+end
 Res(SEGy,SEGx,:) = TempIM;
 
 if(drawMode == 2)
