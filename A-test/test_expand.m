@@ -29,11 +29,15 @@ cancelThreshold = 80;
 %nr mosaics (max)
 n = 5000;
 
+% Max Segment radius size
+SEGMaxRad = 50;
+
+
 % DECIDE INPUT IMAGE HERE
 I = im2double(imresize(imread('elin.jpg'),.8));
 
 % Blur image?
-I = imgaussfilt(I,2);
+%I = imgaussfilt(I,2);
 Isize = [size(I,1) size(I,2)];
 
 Ilab = rgb2lab(I);
@@ -83,11 +87,28 @@ py = py_temp(index);
 px = px_temp(index);
 
 color = I(py,px,:);
-e = Ilab - Ilab(py,px,:);
+
+SEGxstart = max(1,px-SEGMaxRad);
+SEGxend = min(Isize(2),px+SEGMaxRad);
+SEGystart = max(1,py-SEGMaxRad);
+SEGyend = min(Isize(1),py+SEGMaxRad);
+
+SEGx = SEGxstart:SEGxend;
+SEGy = SEGystart:SEGyend;
+
+SEGsize(1) = size(SEGy,2);
+SEGsize(2) = size(SEGx,2);
+
+e = Ilab(SEGy,SEGx,:) - Ilab(py,px,:);
 E = sqrt(e(:,:,1).^2+e(:,:,2).^2+e(:,:,3).^2);
 
+SEGmask = mask(SEGy,SEGx);
+
+px = px - (max(1,px-SEGMaxRad)-1);
+py = py - (max(1,py-SEGMaxRad)-1);
+
 qUsed = 1;
-q(:,1) = [py px E(py,px)];
+q(:,1) = [py px 0];
 
 drawValue = 0;
 % Loop per segment
@@ -104,7 +125,7 @@ while acc_error < maxErr
         break;
     end
         
-    mask(p(1),p(2)) = i;
+    SEGmask(p(1),p(2)) = i;
     
     % adding adjacents to queue and mask
     
@@ -112,26 +133,26 @@ while acc_error < maxErr
 
     
     pt =[p(1)+1, p(2)];
-    if(p(1) ~= Isize(1) && mask(pt(1),pt(2))==0)
-        mask(pt(1),pt(2)) = i+1;
+    if(p(1) ~= SEGsize(1) && SEGmask(pt(1),pt(2))==0)
+        SEGmask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
         q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
     pt =[p(1)-1, p(2)];
-    if(p(1) ~= 1 && mask(pt(1),pt(2))==0)
-        mask(pt(1),pt(2)) = i+1;
+    if(p(1) ~= 1 && SEGmask(pt(1),pt(2))==0)
+        SEGmask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
         q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
     pt =[p(1), p(2)+1];
-    if(p(2) ~= Isize(2) && mask(pt(1),pt(2))==0)
-        mask(pt(1),pt(2)) = i+1;
+    if(p(2) ~= SEGsize(2) && SEGmask(pt(1),pt(2))==0)
+        SEGmask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
         q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
     pt =[p(1), p(2)-1];
-    if(p(2) ~= 1 && mask(pt(1),pt(2))==0)
-        mask(pt(1),pt(2)) = i+1;
+    if(p(2) ~= 1 && SEGmask(pt(1),pt(2))==0)
+        SEGmask(pt(1),pt(2)) = i+1;
         qUsed = qUsed+1;
         q(:,qUsed) = [pt(1),pt(2), E(pt(1),pt(2))+distFun([pt(1),pt(2)],[py,px])*distanceFac];
     end
@@ -145,7 +166,7 @@ while acc_error < maxErr
         scope2 = max(1,p(2)-width);
         scope2 = scope2:min(Isize(2),scope2+2*width);
         
-        draw = I(scope1,scope2,:) + double(mask(scope1,scope2) == i).*drawcol;
+        draw = I(scope1,scope2,:) + double(SEGmask(scope1,scope2) == i).*drawcol;
         %draw = E(scope1,scope2,:)/100 + double(mask(scope1,scope2) == i).*drawcol;
         imshow(draw);
         
@@ -157,15 +178,21 @@ while acc_error < maxErr
 end
 
 if(doContours==0)
-    mask(mask==i+1) = 0;
+    SEGmask(SEGmask==i+1) = 0;
 end
 
-mask3d = repmat(mask,1,1,3);
-Res(mask3d==i) = color(1,1,1);
-mask3d(:,:,1)=0;
-Res(mask3d==i) = color(1,1,2);
-mask3d(:,:,2)=0;
-Res(mask3d==i) = color(1,1,3);
+mask(SEGy,SEGx) = SEGmask;
+
+SEGmask3d = repmat(SEGmask,1,1,3);
+
+TempIM = Res(SEGy,SEGx,:);
+TempIM(SEGmask3d==i) = color(1,1,1);
+SEGmask3d(:,:,1)=0;
+TempIM(SEGmask3d==i) = color(1,1,2);
+SEGmask3d(:,:,2)=0;
+TempIM(SEGmask3d==i) = color(1,1,3);
+
+Res(SEGy,SEGx,:) = TempIM;
 
 if(drawMode == 2)
     imshow(Res)
