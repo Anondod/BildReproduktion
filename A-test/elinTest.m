@@ -34,8 +34,8 @@ distCityBlock = @(p1,p2) sum(abs(p2-p1));
 distEuclidean = @(p1,p2) sqrt(sum((p2-p1).^2));
 
 % choose one from above: euclidean , cityblock
-distFun = distEuclidean;
-distanceFac = 0.4;
+distFun = distCityBlock;
+distanceFac = 0.2;
 
 qSize = 100000;
 
@@ -47,7 +47,7 @@ maxErr = 100000;
 firstSelection = 0;
 
 % if a pixel of the segment has to large an error the segment stops
-cancelThreshold = 20;
+cancelThreshold = 13;
 
 %nr mosaics (max)
 n = 10000;
@@ -57,10 +57,10 @@ SEGMaxRad = 100;
 
 
 % DECIDE INPUT IMAGE HERE
-I = im2double(imresize(imread('elin.jpg'),0.8));
+I = im2double(imresize(imread('cypress.jpg'),1));
 
 % Blur image?
-%I = imgaussfilt(I,2);
+I = imgaussfilt(I,2);
 Isize = [size(I,1) size(I,2)];
 
 Ilab = rgb2lab(I);
