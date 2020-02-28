@@ -1,9 +1,12 @@
-% expansion test
+ warning off;
+clear all;
+warning on;
+
 % DECIDE INPUT IMAGE HERE
 I = im2double(imresize(imread('elin.jpg'),1));
 
 % Blur image?
-%I = imgaussfilt(I,2);
+I = imgaussfilt(I,2);
 
 % **INTERESTING OPTIONS SECTION START**
 
@@ -15,18 +18,18 @@ I = im2double(imresize(imread('elin.jpg'),1));
 
     % 0 - choose at random.
     % 1 - choose first open spot
-    % 2 - choose most monotone areas (low derivative)
-    selectionMethod = 2;
+    % 2 - choose most monotone areas first (low derivative)
+    selectionMethod = 0;
     
     % Number of colors in the image ( 0 = all)
-    nrOfColors = 5;
+    nrOfColors = 0;
 
     % Use morphology on the segment + contours(if true)
-    doMorph = false;
+    doMorph = true;
     % Close structuring element (STREL) 
     closeMorph1 = strel('line', 20, 90);
     closeMorph2 = strel('line', 20, 0);
-    closeMorph3 = strel('sphere', 5);
+    closeMorph3 = strel('sphere', 4);
 
     doContours = true;
     contoursMorph = strel('sphere', 4);
@@ -35,11 +38,11 @@ I = im2double(imresize(imread('elin.jpg'),1));
     distCityBlock = @(p1,p2) sum(abs(p2-p1));
     distEuclidean = @(p1,p2) sqrt(sum((p2-p1).^2));
     % choose one from above: euclidean , cityblock
-    distFun = distCityBlock;
-    distanceFactor = 0.1;
+    distFun = distEuclidean;
+    distanceFactor = 0.3;
 
     % allowed accumulated error per segment
-    maxErr = 4000;
+    maxErr = 6000;
     % if a pixel of the segment has to large an error the segment stops
     cancelThreshold = 30;
     % Max Segment section radius
@@ -80,6 +83,9 @@ drawcol2(1,1,:) = [1,0,0];
 covered = 0;
 
 if(nrOfColors~=0)
+    disp("Starting clustering...");
+    drawnow;
+    
     L = Ilab(:,:,1);
     a = Ilab(:,:,2);
     b = Ilab(:,:,3);
@@ -90,7 +96,10 @@ if(nrOfColors~=0)
 
     [clusterInd, theLABColors] = kmeans(img, nrOfColors);
     
+    
+    
     disp("Done clustering");
+    drawnow;
 end
 
 
@@ -177,7 +186,12 @@ SEGy = SEGystart:SEGyend;
 SEGsize(1) = size(SEGy,2);
 SEGsize(2) = size(SEGx,2);
 
-e = Ilab(SEGy,SEGx,:) - Ilab(py,px,:);
+if(nrOfColors~=0)
+    comparisonLabColor(1,1,:) = LABcolor';
+else
+    comparisonLabColor = Ilab(py,px,:);
+end
+e = Ilab(SEGy,SEGx,:) - comparisonLabColor;
 E = sqrt(e(:,:,1).^2+e(:,:,2).^2+e(:,:,3).^2);
 
 SEGmask = mask(SEGy,SEGx);
