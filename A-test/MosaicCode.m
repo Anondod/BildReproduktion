@@ -2,13 +2,15 @@
 clear all;
 warning on;
 
-% DECIDE INPUT IMAGE HERE
-I = im2double(imresize(imread('elin.jpg'),1));
-
-% Blur image?
-I = imgaussfilt(I,2);
 
 % **INTERESTING OPTIONS SECTION START**
+
+    % DECIDE INPUT IMAGE HERE
+    I = im2double(imresize(imread('Images/elin.jpg'),1));
+
+    % Blur image?
+    %I = imgaussfilt(I,2);
+    
 
     % 0 draws nothing
     % 1 draws every 1% of total segments finished
@@ -19,10 +21,22 @@ I = imgaussfilt(I,2);
     % 0 - choose at random.
     % 1 - choose first open spot
     % 2 - choose most monotone areas first (low derivative)
-    selectionMethod = 0;
+    selectionMethod = 2;
     
-    % Number of colors in the image ( 0 = all)
-    nrOfColors = 0;
+    % 0 - all colors
+    % 1 - colors from palette
+    % 2 - image optimal colors from palette
+    colorMode = 0;
+    
+    % if false - segments are created normally then colored
+    % if true - segments are depending on the palette color
+    compareWithPalette = true;
+    
+    palette = load('palette6.mat');
+    palette = palette.a;
+    % Number of colors to take from palette with colorMode 2
+    n_clusteringColors = 20;
+    
 
     % Use morphology on the segment + contours(if true)
     doMorph = true;
@@ -32,7 +46,7 @@ I = imgaussfilt(I,2);
     closeMorph3 = strel('sphere', 4);
 
     doContours = true;
-    contoursMorph = strel('sphere', 4);
+    contoursMorph = strel('sphere', 3);
 
     
     distCityBlock = @(p1,p2) sum(abs(p2-p1));
@@ -42,9 +56,9 @@ I = imgaussfilt(I,2);
     distanceFactor = 0.3;
 
     % allowed accumulated error per segment
-    maxErr = 6000;
+    maxErr = 8000;
     % if a pixel of the segment has to large an error the segment stops
-    cancelThreshold = 30;
+    cancelThreshold = 50;
     % Max Segment section radius
     SEGMaxRad = 60;
 
@@ -82,7 +96,9 @@ drawcol2(1,1,:) = [1,0,0];
 
 covered = 0;
 
-if(nrOfColors~=0)
+
+
+if(colorMode == 2)
     disp("Starting clustering...");
     drawnow;
     
@@ -94,12 +110,16 @@ if(nrOfColors~=0)
     img(:,2) = a(:);
     img(:,3) = b(:);
 
-    [clusterInd, theLABColors] = kmeans(img, nrOfColors);
-    
-    
+    [clusterInd, theLABColors] = kmeans(img, n_clusteringColors);
     
     disp("Done clustering");
     drawnow;
+    
+    palette = rgb2lab(palette);
+    palette = centroid2PaletteColor(theLABColors, palette);
+    
+elseif(colorMode==1)
+    palette = rgb2lab(palette);
 end
 
 
@@ -141,14 +161,14 @@ else %selectionMethod == 2
     py = py(1);
 end
 
-if(nrOfColors~=0)
+if(colorMode~=0)
     % color selection
-    for j = 1:nrOfColors
+    for j = 1:length(palette)
         test(:) = Ilab(py,px,:);
-        e = theLABColors(j, :) - test;
+        e = palette(j, :) - test;
         ETheColors(j, :) = sqrt(e(1).^2+e(2).^2+e(3).^2);
     end
-    LABcolor = theLABColors(ETheColors == min(ETheColors), :);
+    LABcolor = palette(ETheColors == min(ETheColors), :);
     color(1,1,:) = lab2rgb(LABcolor)';
 else
     color = I(py,px,:);
@@ -186,7 +206,7 @@ SEGy = SEGystart:SEGyend;
 SEGsize(1) = size(SEGy,2);
 SEGsize(2) = size(SEGx,2);
 
-if(nrOfColors~=0)
+if(colorMode~=0 && compareWithPalette)
     comparisonLabColor(1,1,:) = LABcolor';
 else
     comparisonLabColor = Ilab(py,px,:);
@@ -322,6 +342,8 @@ end
 fprintf("done at " + 100*(1-unfilled/(Isize(1)*Isize(2)))+"%% coverage\n");
 
 %%
+warning off;
+
 close all
 figure;
 draw = I;
@@ -337,6 +359,7 @@ figure;
 imshow(Res)
 title("result");
 
+warning on;
 
 % SAVE COMMAND
 %imwrite(Res,'insertname.png')
