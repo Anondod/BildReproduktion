@@ -6,7 +6,7 @@ warning on;
 % **INTERESTING OPTIONS SECTION START**
 
     % DECIDE INPUT IMAGE HERE
-    I = im2double(imresize(imread('Images/elin.jpg'),1));
+    I = im2double(imresize(imread('Images/kungen.webp'),1));
 
     % Blur image?
     %I = imgaussfilt(I,2);
@@ -45,8 +45,8 @@ warning on;
     closeMorph2 = strel('line', 20, 0);
     closeMorph3 = strel('sphere', 4);
 
-    doContours = true;
-    contoursMorph = strel('sphere', 2);
+    doContours = false;
+    contoursMorph = strel('sphere', 3);
 
     
     distCityBlock = @(p1,p2) sum(abs(p2-p1));
@@ -56,7 +56,7 @@ warning on;
     distanceFactor = 0.3;
 
     % allowed accumulated error per segment
-    maxErr = 4000;
+    maxErr = 8000;
     % if a pixel of the segment has to large an error the segment stops
     cancelThreshold = 20;
     % Max Segment section radius
