@@ -17,6 +17,8 @@ figure;
 imshow(ssimmap,[])
 title(['Local SSIM Map with Global SSIM Value: ',num2str(ssimval)])
 
+sCIELabMetric
+
 %% Kod för att lägga till kontur på orginalbilden
 % a = i;
 % b = repmat(mask, 1, 1, 3);

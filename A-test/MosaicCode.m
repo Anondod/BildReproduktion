@@ -45,7 +45,7 @@ warning on;
     closeMorph2 = strel('line', 20, 0);
     closeMorph3 = strel('sphere', 4);
 
-    doContours = true;
+    doContours = false;
     contoursMorph = strel('sphere', 3);
 
     
@@ -362,4 +362,4 @@ title("result");
 warning on;
 
 % SAVE COMMAND
-%imwrite(Res,'insertname.png')
+imwrite(Res,'elin_AllColors_noCont.png')
