@@ -2,9 +2,9 @@ clc
 close all
 clear all
 
-orginalStarry = imread('starryNight.jpg');
-starryBiggest = imread('starryNight20colorsLeft.png');
-strarrySmallest = imread('starryNight20colorsLeftSmall.png');
+orginalStarry = imread('Images/starryNight.jpg');
+starryBiggest = imread('Tests/starryNight20colorsLeft.png');
+strarrySmallest = imread('Tests/starryNight20colorsLeftSmall.png');
 
 orginalSmall = imresize(orginalStarry, 0.7);
 

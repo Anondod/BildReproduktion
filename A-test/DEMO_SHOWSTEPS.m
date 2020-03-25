@@ -16,12 +16,12 @@ warning on;
     % 1 draws every 1% of total segments finished
     % 2 draws when each segment is finished
     % 3 shows every pixel update
-    drawMode = 1;
+    drawMode = 3;
 
     % 0 - choose at random.
     % 1 - choose first open spot
     % 2 - choose most monotone areas first (low derivative)
-    selectionMethod = 2;
+    selectionMethod = 0;
     
     % 0 - all colors
     % 1 - colors from palette
@@ -45,13 +45,8 @@ warning on;
     closeMorph2 = strel('line', 20, 0);
     closeMorph3 = strel('sphere', 4);
 
-<<<<<<< HEAD
     doContours = false;
     contoursMorph = strel('sphere', 3);
-=======
-    doContours = true;
-    contoursMorph = strel('sphere', 2);
->>>>>>> d006b11939055bb6cf469d03c3640e042c76e647
 
     
     distCityBlock = @(p1,p2) sum(abs(p2-p1));
@@ -61,11 +56,11 @@ warning on;
     distanceFactor = 0.3;
 
     % allowed accumulated error per segment
-    maxErr = 4000;
+    maxErr = 1000;
     % if a pixel of the segment has to large an error the segment stops
     cancelThreshold = 20;
     % Max Segment section radius
-    SEGMaxRad = 50;
+    SEGMaxRad = 40;
 
     
     %nr mosaics (max)
@@ -278,10 +273,16 @@ while acc_error < maxErr
    
     
     % draw per pixel (or fewer depending on mod value)
-    if(drawMode == 3 && mod(drawValue, 10)==0)
-        draw = I(SEGy,SEGx,:) + double(SEGmask == i).*drawcol;
-        imshow(draw);
-        pause(0.001);
+    if(drawMode == 3 && mod(drawValue, 1)==0)
+        draw = I(SEGy,SEGx,:);
+        channel = repmat(SEGmask, 1,1,3);
+        channel(:,:,2:3) = 0;
+        draw(channel == i) = 1;
+        channel(:,:,1) = 0;
+        channel(:,:,2) = SEGmask;
+        draw(channel == (i+1)) = draw(channel == (i+1)) + 0.4;
+        imshow(imresize(draw, 10, 'nearest'));
+        pause(0.01);
     end
     
     drawValue = drawValue+1;
@@ -291,6 +292,15 @@ end
 if(doContours==false)
     SEGmask(SEGmask==i+1) = 0;
 end
+
+draw = I(SEGy,SEGx,:);
+channel = repmat(SEGmask, 1,1,3);
+channel(:,:,2:3) = 0;
+draw(channel == i) = 1;
+channel(:,:,1) = 0;
+channel(:,:,2) = SEGmask;
+draw(channel == (i+1)) = 1;
+imshow(imresize(draw, 10, 'nearest'));
 
 if(doMorph == true)
     tempClose = SEGmask == i;
@@ -312,6 +322,17 @@ end
 if(selectionMethod==2)
     Dmag(SEGy,SEGx) = Dmag(SEGy,SEGx)+double(SEGmask);
 end
+
+pause;
+draw = I(SEGy,SEGx,:);
+channel = repmat(SEGmask, 1,1,3);
+channel(:,:,2:3) = 0;
+draw(channel == i) = 1;
+channel(:,:,1) = 0;
+channel(:,:,2) = SEGmask;
+draw(channel == (i+1)) = 1;
+imshow(imresize(draw, 10, 'nearest'));
+pause;
 
 mask(SEGy,SEGx) = SEGmask;
 
@@ -367,4 +388,4 @@ title("result");
 warning on;
 
 % SAVE COMMAND
-imwrite(Res,'elin_AllColors_noCont.png')
+%imwrite(Res,'insertname.png')

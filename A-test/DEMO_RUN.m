@@ -16,7 +16,7 @@ warning on;
     % 1 draws every 1% of total segments finished
     % 2 draws when each segment is finished
     % 3 shows every pixel update
-    drawMode = 1;
+    drawMode = 2;
 
     % 0 - choose at random.
     % 1 - choose first open spot
@@ -45,13 +45,8 @@ warning on;
     closeMorph2 = strel('line', 20, 0);
     closeMorph3 = strel('sphere', 4);
 
-<<<<<<< HEAD
-    doContours = false;
-    contoursMorph = strel('sphere', 3);
-=======
     doContours = true;
-    contoursMorph = strel('sphere', 2);
->>>>>>> d006b11939055bb6cf469d03c3640e042c76e647
+    contoursMorph = strel('sphere', 3);
 
     
     distCityBlock = @(p1,p2) sum(abs(p2-p1));
@@ -61,11 +56,11 @@ warning on;
     distanceFactor = 0.3;
 
     % allowed accumulated error per segment
-    maxErr = 4000;
+    maxErr = 12000;
     % if a pixel of the segment has to large an error the segment stops
-    cancelThreshold = 20;
+    cancelThreshold = 30;
     % Max Segment section radius
-    SEGMaxRad = 50;
+    SEGMaxRad = 40;
 
     
     %nr mosaics (max)
@@ -130,7 +125,9 @@ end
 
 % main segment for-loop
 for i=2:2:2*n
-
+if(i>300)
+    drawMode = 1;
+end
 % alt faster ver. but looks worse maybe. also breaks coverage.
 % firstSelection = 1 gives the same result every time (maybe useful)
 if(selectionMethod == 0)
@@ -355,10 +352,6 @@ draw = I;
 imshow(draw);
 title("original");
 
-figure;
-imshow(double(mask)/i)
-title("segments");
-
 
 figure;
 imshow(Res)
@@ -367,4 +360,4 @@ title("result");
 warning on;
 
 % SAVE COMMAND
-imwrite(Res,'elin_AllColors_noCont.png')
+%imwrite(Res,'insertname.png')
